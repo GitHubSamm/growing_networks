@@ -3,6 +3,19 @@
 
 # Raw Data
 data/raw/
+data/processed/
 
 # Log files
 *.log
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Results
+results/
+
+
+docstring.txt
+*.egg-info/
+
