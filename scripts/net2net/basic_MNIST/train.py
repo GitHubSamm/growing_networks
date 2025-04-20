@@ -168,12 +168,11 @@ def evaluate(test_loader, model, criterion, device="cpu"):
 
 if __name__ == "__main__":
 
-    results_dir = utils_net2net.create_result_dir(task_name="basic_MNIST")
-    sys.stdout = logger.Logger(os.path.join(results_dir, "train_log.txt"))
-
     device = utils.get_device()
     project_folder = utils.get_project_root()
     data_folder = utils.get_data_folder()
+    results_dir = utils_net2net.create_result_dir(task_name="basic_MNIST")
+    sys.stdout = logger.Logger(os.path.join(results_dir, "train_log.txt"))
 
     # Import MNIST data
     print(f"Data will be saved (if not already) in:\n{data_folder}")

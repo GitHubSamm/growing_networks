@@ -1,5 +1,7 @@
 import torch
 import os
+import numpy as np
+import random
 
 
 def get_device():
@@ -32,3 +34,44 @@ def get_project_root():
 
 def get_data_folder():
     return os.path.join(get_project_root(), "data", "raw")
+
+
+def seed_everything(
+    seed: int = 42, verbose: bool = True, deterministic: bool = True
+) -> int:
+    """
+    Strongly inspired by the homonym function in speechbrain
+    Set the seed for random number generators in Python, NumPy, and PyTorch.
+
+    Args:
+        seed (int): The random seed to use.
+        verbose (bool): Whether to print the seed being set.
+        deterministic (bool): Whether to enforce deterministic
+        behavior in PyTorch.
+
+    Returns:
+        int: The seed that was set.
+
+    Example:
+        >>> seed_everything(42)
+
+    @author Sam Collin
+    """
+    if verbose:
+        print(f"Setting global seed to {seed}")
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
+
+    return seed
+
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)

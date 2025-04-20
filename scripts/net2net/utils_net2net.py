@@ -102,7 +102,7 @@ def create_result_dir(task_name="experiment"):
     os.makedirs(results_base_dir, exist_ok=True)
 
     # Create subdirectory for this specific run
-    run_dir = os.path.join(results_base_dir, f"{timestamp}_{task_name}")
+    run_dir = os.path.join(results_base_dir, f"{task_name}_{timestamp}")
     os.makedirs(run_dir, exist_ok=True)
 
     print(f"Results will be saved in: {run_dir}")

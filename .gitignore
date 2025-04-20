@@ -19,3 +19,4 @@ results/
 docstring.txt
 *.egg-info/
 
+test.ipynb
