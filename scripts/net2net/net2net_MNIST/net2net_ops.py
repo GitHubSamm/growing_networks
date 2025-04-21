@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import speechbrain as sb
 
 
 def _find_layer(model, layer_name):
@@ -11,7 +12,11 @@ def _find_layer(model, layer_name):
 
 
 def net2wider_linear(
-    layer: nn.Module, next_layer: nn.Module, new_width=None, noise_std=0.01
+    layer: nn.Module,
+    next_layer: nn.Module,
+    new_width=None,
+    norm_layer=None,
+    noise_std=0.01,
 ):
     """
     Return a wider version of a Linear layer with function-preserving weight transfer.
@@ -48,9 +53,31 @@ def net2wider_linear(
     new_next_layer = nn.Linear(new_width, next_layer.out_features)
 
     # First, we will copy the already trained weights
+    # Layer
     new_layer.weight.data[: layer.out_features] = layer.weight.data
     new_layer.bias.data[: layer.out_features] = layer.bias.data
+    # Next Layer
     new_next_layer.weight.data[:, : layer.out_features] = next_layer.weight.data
+
+    # BatchNorm handling (Copy the layer but with new size)
+    if norm_layer is not None:
+        # Create new
+        new_norm_layer = sb.nnet.normalization.BatchNorm1d(input_size=new_width)
+        # Fill with previous
+        new_norm_layer.norm.weight.data[: layer.out_features] = (
+            norm_layer.norm.weight.data
+        )
+        new_norm_layer.norm.bias.data[: layer.out_features] = norm_layer.norm.bias.data
+
+        new_norm_layer.norm.running_mean.data[: layer.out_features] = (
+            norm_layer.norm.running_mean.data
+        )
+        new_norm_layer.norm.running_var.data[: layer.out_features] = (
+            norm_layer.norm.running_var.data
+        )
+        new_norm_layer.norm.num_batches_tracked.data = (
+            norm_layer.norm.num_batches_tracked.data
+        )
 
     for i in range(n_add_weights):
 
@@ -67,6 +94,22 @@ def net2wider_linear(
         if noise_std:
             pass
 
+        # Duplicate also the norm params
+        if norm_layer is not None:
+
+            new_norm_layer.norm.weight.data[layer.out_features + i] = (
+                new_norm_layer.norm.weight.data[idx_split : idx_split + 1]
+            )
+            new_norm_layer.norm.bias.data[layer.out_features + i] = (
+                new_norm_layer.norm.bias.data[idx_split : idx_split + 1]
+            )
+            new_norm_layer.norm.running_mean.data[layer.out_features + i] = (
+                new_norm_layer.norm.running_mean.data[idx_split : idx_split + 1]
+            )
+            new_norm_layer.norm.running_var.data[layer.out_features + i] = (
+                new_norm_layer.norm.running_var.data[idx_split : idx_split + 1]
+            )
+
         # To handle the next layer and perform function preservig, we divide
         # the weights associated with the splitted node and copy this divided
         # one
@@ -74,6 +117,8 @@ def net2wider_linear(
         new_next_layer.weight.data[:, layer.out_features + i] = (
             new_next_layer.weight.data[:, idx_split]
         )
+    if norm_layer is not None:
+        return new_layer, new_next_layer, new_norm_layer
 
     return new_layer, new_next_layer
 

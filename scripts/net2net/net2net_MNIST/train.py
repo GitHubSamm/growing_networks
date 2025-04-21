@@ -14,19 +14,19 @@ import scripts.utils as utils
 import scripts.net2net.utils_net2net as utils_net2net
 import scripts.net2net.net2net_MNIST.model as models
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", type=str, default="young", choices=["young", "adult"])
+parser.add_argument("--strat", type=int, default=1, choices=[1, 2, 3])
+parser.add_argument("--no_growth_for_baseline", action="store_true")
+parser.add_argument("--dataset", default="MNIST", choices=["MNIST", "FASHION_MNIST"])
+command_line_args = parser.parse_args()
 
 # == Hparams == #
-STRAT_NUMBER = 2
+STRAT_NUMBER = command_line_args.strat
 BATCH_SIZE = 64
 LEARNING_RATE = 0.01
 N_EPOCHS_BEFORE_GROW = 8
 N_GROWTH = 2
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, default="small", choices=["young", "adult"])
-parser.add_argument("--no_growth_for_baseline", action="store_true")
-parser.add_argument("--dataset", default="MNIST", choices=["MNIST", "FASHION_MNIST"])
-command_line_args = parser.parse_args()
 
 # == Pre-Processing == #
 preprocess_MNIST = tf.Compose([tf.ToTensor(), tf.Normalize((0.1307,), (0.3081,))])
@@ -38,11 +38,13 @@ model_dict = {
     "model_adult_strat1": models.SuperBasicMLP_big_strat1,
     "model_young_strat2": models.SuperBasicMLP_strat2,
     "model_adult_strat2": models.SuperBasicMLP_big_strat2,
+    "model_young_strat3": models.SuperBasicMLP_BN1D,
+    "model_adult_strat3": models.SuperBasicMLP_big_BN1D,
 }
 
 
 # == Functions == #
-def growth_strategy(model, growth_number, strat_number=1):
+def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
 
     if growth_number == 0:
         print("No growth here (Original step)")
@@ -77,6 +79,22 @@ def growth_strategy(model, growth_number, strat_number=1):
                 layer, next_layer, new_width
             )
             return model
+    if strat_number == 3:
+        print("Model growing ...")
+        layer, next_layer, norm_layer = model.lin1, model.lin2, model.norm
+
+        new_width = int(layer.out_features * 4)
+        new_layer, new_next_layer, new_norm_layer = net2net_ops.net2wider_linear(
+            layer, next_layer, new_width, norm_layer
+        )
+
+        model.lin1 = new_layer
+        model.lin2 = new_next_layer
+        model.norm = new_norm_layer
+        return model
+
+    else:
+        raise ValueError(f"No strategy implemented for number {strat_number}.")
 
 
 def train(train_loader, model, epochs, criterion, optimizer, device="cpu"):
@@ -225,7 +243,8 @@ if __name__ == "__main__":
         + "\nStarting net2net_MNIST ..."
         + f"\nModel used: {command_line_args.model} "
         + f"| Dataset used: {command_line_args.dataset} "
-        + f"| Growth enabled: {not NO_GROWTH_BASELINE}"
+        + f"| Growth enabled: {not NO_GROWTH_BASELINE} "
+        + f"| Strat number: {STRAT_NUMBER}"
         + "\n##########"
     )
     # Import data

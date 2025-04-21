@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import speechbrain as sb
 
 
 class SuperBasicMLP_strat1(nn.Module):
@@ -153,4 +154,44 @@ class SuperBasicMLP_big_strat2(nn.Module):
         x = self.lin2(x)
         x = F.relu(x)
         out = self.lin3(x)
+        return out
+
+
+class SuperBasicMLP_BN1D(nn.Module):
+
+    def __init__(self):
+
+        super(SuperBasicMLP_BN1D, self).__init__()
+
+        self.lin1 = nn.Linear(28 * 28, 8)
+        self.lin2 = nn.Linear(8, 10)
+        self.norm = sb.nnet.normalization.BatchNorm1d(input_size=8)
+
+    def forward(self, x):
+
+        x = x.view(x.size(0), -1)
+        x = self.lin1(x)
+        x = self.norm(x)
+        x = F.relu(x)
+        out = self.lin2(x)
+        return out
+
+
+class SuperBasicMLP_big_BN1D(nn.Module):
+
+    def __init__(self):
+
+        super(SuperBasicMLP_big_BN1D, self).__init__()
+
+        self.lin1 = nn.Linear(28 * 28, 128)
+        self.lin2 = nn.Linear(128, 10)
+        self.norm = sb.nnet.normalization.BatchNorm1d(input_size=128)
+
+    def forward(self, x):
+
+        x = x.view(x.size(0), -1)
+        x = self.lin1(x)
+        x = self.norm(x)
+        x = F.relu(x)
+        out = self.lin2(x)
         return out
