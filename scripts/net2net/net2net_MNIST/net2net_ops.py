@@ -17,6 +17,7 @@ def net2wider_linear(
     new_width=None,
     norm_layer=None,
     noise_std=0.01,
+    last_block=False,
 ):
     """
     Return a wider version of a Linear layer with function-preserving weight transfer.
@@ -122,7 +123,7 @@ def net2wider_linear(
         )
 
         # Add output noise (same idea)
-        if noise_std:
+        if noise_std and not last_block:
             new_next_layer.weight.data[:, layer.out_features + i] += (
                 torch.randn_like(new_next_layer.weight.data[:, idx_split]) * noise_std
             )

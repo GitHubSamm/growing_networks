@@ -37,6 +37,7 @@ class GrowingCRDNN(nn.Module):
                 norm_layer=current_block.norm,
                 new_width=new_width,
                 noise_std=noise_std,
+                last_block=last_block,
             )
             # Assign the new layers
             current_block.linear.w = new_linear.to(device)
