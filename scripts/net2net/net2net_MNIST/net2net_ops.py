@@ -94,6 +94,9 @@ def net2wider_linear(
                 torch.randn(1).to(layer.weight.device).item() * noise_std
             )
 
+        new_layer.weight.data[layer.out_features + i] = weights_splitted_node
+        new_layer.bias.data[layer.out_features + i] = bias_splitted_node
+
         # Duplicate also the norm params
         if norm_layer is not None:
 
