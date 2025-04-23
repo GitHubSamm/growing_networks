@@ -84,15 +84,15 @@ def net2wider_linear(
         idx_split = np.random.randint(0, layer.out_features)
 
         # Retrieve the node that will be duplicated
-        weights_splitted_node = layer.weight.data[idx_split]
-        new_layer.weight.data[layer.out_features + i] = weights_splitted_node
-
-        # Duplicate also the bias in the new layer
-        new_layer.bias.data[layer.out_features + i] = layer.bias.data[idx_split]
+        weights_splitted_node = layer.weight.data[idx_split].clone()
+        bias_splitted_node = layer.bias.data[idx_split].clone()
 
         # Add noise handling here
         if noise_std:
-            pass
+            weights_splitted_node += torch.randn_like(weights_splitted_node) * noise_std
+            bias_splitted_node += (
+                torch.randn(1).to(layer.weight.device).item() * noise_std
+            )
 
         # Duplicate also the norm params
         if norm_layer is not None:
@@ -117,6 +117,13 @@ def net2wider_linear(
         new_next_layer.weight.data[:, layer.out_features + i] = (
             new_next_layer.weight.data[:, idx_split]
         )
+
+        # Add output noise (same idea)
+        if noise_std:
+            new_next_layer.weight.data[:, layer.out_features + i] += (
+                torch.randn_like(new_next_layer.weight.data[:, idx_split]) * noise_std
+            )
+
     if norm_layer is not None:
         return new_layer, new_next_layer, new_norm_layer
 

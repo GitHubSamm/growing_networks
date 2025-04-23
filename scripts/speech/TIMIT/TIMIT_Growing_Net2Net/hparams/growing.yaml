@@ -8,11 +8,12 @@
 # Seed needs to be set at top of yaml, before objects with parameters are made
 seed: 1986
 __set_seed: !apply:speechbrain.utils.seed_everything [!ref <seed>]
-output_folder: !ref results/TIMIT_Growing_young/augment_noise_CRDNN/<seed>
+output_folder: !ref results/TIMIT_Growing_young_at_epoch5/augment_noise_CRDNN/<seed>
 test_wer_file: !ref <output_folder>/wer_test.txt
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 wandb_mode: online # Pass disabled for submission
+run_name: xyz
 
 # Data files
 data_folder: !PLACEHOLDER # e.g. /path/to/TIMIT
@@ -206,4 +207,5 @@ per_stats:
 
 
 growth_factor: 2
-growth_epoch: [1]
+growth_epoch: [5]
+noise_std: 0.01

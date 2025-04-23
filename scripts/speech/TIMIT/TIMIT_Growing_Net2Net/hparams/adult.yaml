@@ -12,11 +12,12 @@
 # Seed needs to be set at top of yaml, before objects with parameters are made
 seed: 1986
 __set_seed: !apply:speechbrain.utils.seed_everything [!ref <seed>]
-output_folder: !ref results/TIMIT_Growing_adult_baseline/no_augment_noise_CRDNN/<seed>
+output_folder: !ref results/TIMIT_Growing_real_adult_baseline/no_augment_noise_CRDNN/<seed>
 test_wer_file: !ref <output_folder>/wer_test.txt
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
 wandb_mode: online # Pass disabled for submission
+run_name: xyz
 
 # Data files
 data_folder: !PLACEHOLDER # e.g. /path/to/TIMIT
@@ -48,7 +49,7 @@ n_mels: 40
 activation: !name:torch.nn.LeakyReLU
 dropout: 0.15
 cnn_blocks: 2
-cnn_channels: (64, 128)
+cnn_channels: (32, 64)
 cnn_kernelsize: (3, 3)
 rnn_layers: 4
 rnn_neurons: 256

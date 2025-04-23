@@ -11,7 +11,7 @@ class GrowingCRDNN(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-    def grow(self, width_factor):
+    def grow(self, width_factor, noise_std):
 
         n_blocks = len(self.model.DNN)
         last_block = False
@@ -36,6 +36,7 @@ class GrowingCRDNN(nn.Module):
                 next_layer=next_block.linear.w if not last_block else out_linear,
                 norm_layer=current_block.norm,
                 new_width=new_width,
+                noise_std=noise_std,
             )
             # Assign the new layers
             current_block.linear.w = new_linear.to(device)

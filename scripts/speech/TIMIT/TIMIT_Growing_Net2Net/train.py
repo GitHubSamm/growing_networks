@@ -130,7 +130,10 @@ class ASR_Brain(sb.Brain):
                 print("Previous model is:\n", asr_brain.modules.model.model)
                 print("Output is:\n", asr_brain.modules.output)
                 print("\n\n# Model starts growing ... #")
-                self.modules.model.grow(width_factor=self.hparams.growth_factor)
+                self.modules.model.grow(
+                    width_factor=self.hparams.growth_factor,
+                    noise_std=self.hparams.noise_std,
+                )
                 print("Model has grown successfully")
                 print("New model is:\n", asr_brain.modules.model.model)
                 print("Output is:\n", asr_brain.modules.output)
@@ -253,7 +256,7 @@ if __name__ == "__main__":
     wandb.init(
         project="growing-networks",
         config=hparams,
-        name="TEST-growing-TIMIT-young-w-growth",
+        name=hparams["run_name"],
         mode=hparams["wandb_mode"],  # Choose if we use and connect wandb
     )
 
