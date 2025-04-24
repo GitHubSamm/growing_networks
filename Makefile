@@ -29,13 +29,13 @@ run-basic-MNIST:
 #---- Strat 3 = Wider + BatchNorm handling
 
 # MNIST 
-run-net2net-MNIST-with-growth:
+run-net2net-MNIST-with-growth-strat1:
 	$(PYTHON) -m scripts.net2net.net2net_MNIST.train --model young --strat 1 --dataset MNIST
 
-run-net2net-MNIST-without-growth_young:
+run-net2net-MNIST-without-growth_young-strat1:
 	$(PYTHON) -m scripts.net2net.net2net_MNIST.train --model young --strat 1 --dataset MNIST --no_growth_for_baseline
 
-run-net2net-MNIST-without-growth_adult:
+run-net2net-MNIST-without-growth_adult-strat1:
 	$(PYTHON) -m scripts.net2net.net2net_MNIST.train --model adult --strat 1 --dataset MNIST --no_growth_for_baseline
 
 # Fashion MNIST

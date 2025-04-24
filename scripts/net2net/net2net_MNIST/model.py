@@ -5,29 +5,27 @@ import speechbrain as sb
 
 class SuperBasicMLP_strat1(nn.Module):
     """
-    A super basic Multi-Layer Perceptron (MLP) model for classification tasks.
+    A minimal Multi-Layer Perceptron (MLP) for MNIST-like classification tasks.
 
-    This model processes flattened inputs through a series of linear layers
-    with non-linear activation functions to produce class scores.
+    This model flattens 28x28 input images and applies two linear layers with
+    ReLU activation in between. It is designed as a simple baseline architecture
+    for experiments involving model growth.
 
-    Args:
-        None
-
-    Attributes:
-        lin1 (nn.Linear): First linear transformation.
-        lin2 (nn.Linear): Final linear transformation projecting to class
-        scores.
+    Architecture:
+        - Linear(784 → 8) + ReLU
+        - Linear(8 → 10)
 
     Example:
-        >>> model = BasicMLP()
-        >>> x = torch.randn(32, 1, 28, 28)  # Batch of 32 MNIST images
+        >>> model = SuperBasicMLP_strat1()
+        >>> x = torch.randn(32, 1, 28, 28)
         >>> output = model(x)
-        >>> print(output.shape)  # torch.Size([32, 10])
+        >>> output.shape
+        torch.Size([32, 10])
     """
 
     def __init__(self):
         """
-        Initialize the BasicMLP layers.
+        Initializes the MLP with two fully connected layers.
         """
 
         super(SuperBasicMLP_strat1, self).__init__()
@@ -37,13 +35,13 @@ class SuperBasicMLP_strat1(nn.Module):
 
     def forward(self, x):
         """
-        Perform a forward pass through the network.
+        Forward pass through the MLP.
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, 1, 28, 28).
 
         Returns:
-            torch.Tensor: Output tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output tensor of shape (batch_size, 10).
         """
 
         x = x.view(x.size(0), -1)
@@ -53,23 +51,42 @@ class SuperBasicMLP_strat1(nn.Module):
 
 
 class SuperBasicMLP_big_strat1(nn.Module):
+    """
+    A larger variant of the SuperBasicMLP model for MNIST classification.
+
+    This model increases the capacity of the hidden layer to 128 units,
+    allowing more complex representations compared to the smaller version.
+
+    Architecture:
+        - Linear(784 → 128) + ReLU
+        - Linear(128 → 10)
+
+    Example:
+        >>> model = SuperBasicMLP_big_strat1()
+        >>> x = torch.randn(32, 1, 28, 28)
+        >>> output = model(x)
+        >>> output.shape
+        torch.Size([32, 10])
+    """
 
     def __init__(self):
-
+        """
+        Initializes the larger MLP with a wider hidden layer.
+        """
         super(SuperBasicMLP_big_strat1, self).__init__()
 
-        self.lin1 = nn.Linear(28 * 28, 512)
-        self.lin2 = nn.Linear(512, 10)
+        self.lin1 = nn.Linear(28 * 28, 128)
+        self.lin2 = nn.Linear(128, 10)
 
     def forward(self, x):
         """
-        Perform a forward pass through the network.
+        Forward pass through the network.
 
         Args:
             x (torch.Tensor): Input tensor of shape (batch_size, 1, 28, 28).
 
         Returns:
-            torch.Tensor: Output tensor of shape (batch_size, num_classes).
+            torch.Tensor: Output tensor of shape (batch_size, 10).
         """
 
         x = x.view(x.size(0), -1)

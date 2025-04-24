@@ -14,6 +14,7 @@ import scripts.utils as utils
 import scripts.net2net.utils_net2net as utils_net2net
 import scripts.net2net.net2net_MNIST.model as models
 
+# Argument Parser inspired by the one in speechbrain
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, default="young", choices=["young", "adult"])
 parser.add_argument("--strat", type=int, default=1, choices=[1, 2, 3])
@@ -45,32 +46,72 @@ model_dict = {
 
 # == Functions == #
 def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
+    """
+    Applies a growth transformation to a given model according to the specified strategy.
 
+    This function supports multiple growth strategies for widening or deepening
+    the architecture of a neural network during training (e.g., Net2Net).
+
+    Args:
+        model (nn.Module): The model to be grown.
+        growth_number (int): The growth stage index. Used to decide which growth operation to apply
+                            (e.g., for multi-step strategies).
+        strat_number (int, optional): The strategy index to use for growing the network.
+                                    Defaults to the global STRAT_NUMBER.
+
+    Supported Strategies:
+        - Strategy 1: Net2Wider applied on a two-layer MLP (lin1 → lin2).
+        - Strategy 2:
+            - Step 1: Net2Deeper inserted between input and hidden (lin1 becomes Sequential).
+            - Step 2: Net2Wider applied on the inner hidden layer and lin2.
+        - Strategy 3: Net2Wider with BatchNorm support.
+
+    Returns:
+        nn.Module: The updated model with increased capacity according to the selected strategy.
+
+    Raises:
+        ValueError: If an unknown strategy number is provided.
+
+    Example:
+        >>> model = SuperBasicMLP_strat1()
+        >>> model = growth_strategy(model, growth_number=1, strat_number=1)
+    """
+    # In any case, the first set of epoch will be done without any growth
     if growth_number == 0:
         print("No growth here (Original step)")
         return model
 
+    # Growth rules for strategy 1 (Wider)
     if strat_number == 1:
 
+        # Retrieve the current layers
         print("Model growing ...")
         layer, next_layer = model.lin1, model.lin2
 
+        # Make the hidden layer four times wider using net2wider at each growth
         new_width = int(layer.out_features * 4)
         new_layer, new_next_layer = net2net_ops.net2wider_linear(
-            layer, next_layer, new_width
+            layer, next_layer, new_width, noise_std=0.0
         )
-
+        # Assign the new layers
         model.lin1 = new_layer
         model.lin2 = new_next_layer
 
         return model
 
+    # Growth rules for strategy 2 (Deeper + Wider)
     if strat_number == 2:
+
+        # For the first growth, deepen the model by adding a layer
         if growth_number == 1:
+
+            # Add a new layer using net2deeper
             layer = model.lin1
             duplicated_layer = net2net_ops.net2deeper_linear(layer)
             model.lin1 = duplicated_layer
             return model
+
+        # For the second one, make the newly created layer 2 times wider
         if growth_number == 2:
             layer = model.lin1[1]
             next_layer = model.lin2
@@ -79,18 +120,25 @@ def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
                 layer, next_layer, new_width
             )
             return model
+
+    # Growth rules for strategy 3 (Wider + BatchNorm)
     if strat_number == 3:
+
+        # Retrieve the layers + the batchnorm layer
         print("Model growing ...")
         layer, next_layer, norm_layer = model.lin1, model.lin2, model.norm
 
+        # Make the hidden layer four times wider using net2wider at each growth
         new_width = int(layer.out_features * 4)
         new_layer, new_next_layer, new_norm_layer = net2net_ops.net2wider_linear(
             layer, next_layer, new_width, norm_layer
         )
 
+        # Assign the new layers
         model.lin1 = new_layer
         model.lin2 = new_next_layer
         model.norm = new_norm_layer
+
         return model
 
     else:
@@ -142,7 +190,7 @@ def train(train_loader, model, epochs, criterion, optimizer, device="cpu"):
 
             optimizer.zero_grad()
 
-            # Forwad pass
+            # Forward pass
             output = model(data)
 
             loss = criterion(output, target)
@@ -179,8 +227,9 @@ def evaluate(test_loader, model, criterion, device="cpu", train=False):
     Args:
         test_loader (torch.utils.data.DataLoader): DataLoader for the test dataset.
         model (torch.nn.Module): The model to evaluate.
-        criterion (torch.nn.Module): Loss function for evaluation.
-        device (str, optional): Device to use ("cpu", "cuda", "mps"). Default is "cpu".
+        criterion (torch.nn.Module): Loss function used during evaluation.
+        device (str, optional): Device to use ("cpu", "cuda", or "mps"). Default is "cpu".
+        train (bool, optional): If True, suppress evaluation printing (e.g., during training). Default is False.
 
     Returns:
         tuple:
@@ -226,7 +275,26 @@ def evaluate(test_loader, model, criterion, device="cpu", train=False):
 
 
 if __name__ == "__main__":
+    """
+    Main entry point for the training and evaluation pipeline.
 
+    This function initializes data loaders, model, optimizer,
+    and loss function, then trains and evaluates the model.
+    It optionally applies a growth strategy at predefined points to
+    increase model capacity during training.
+
+    Typical steps:
+    1. Load and preprocess the dataset.
+    2. Initialize model, loss, and optimizer.
+    3. Train the model (possibly applying a growth strategy mid-training).
+    4. Evaluate the model on test data.
+    5. Save or log the results.
+
+    Returns:
+        None
+    """
+
+    # Set the seed, the result folder and create the logger for the results
     utils.seed_everything(691)
     device = utils.get_device()
     project_folder = utils.get_project_root()
@@ -238,6 +306,7 @@ if __name__ == "__main__":
 
     NO_GROWTH_BASELINE = command_line_args.no_growth_for_baseline
 
+    # Diplay run info
     print(
         "\n##########"
         + "\nStarting net2net_MNIST ..."
@@ -247,6 +316,7 @@ if __name__ == "__main__":
         + f"| Strat number: {STRAT_NUMBER}"
         + "\n##########"
     )
+
     # Import data
     print(f"\nData will be saved (if not already) in:\n{data_folder}")
 
@@ -291,6 +361,7 @@ if __name__ == "__main__":
         growth_results_dir = os.path.join(results_dir, f"growth{growth_number}")
         os.makedirs(growth_results_dir, exist_ok=True)
 
+        # Check wether a growth strat is required
         print(f"\nBegin step {growth_number}")
         if not NO_GROWTH_BASELINE:
             model = growth_strategy(model, growth_number, STRAT_NUMBER)
@@ -299,6 +370,7 @@ if __name__ == "__main__":
         else:
             print("No growth here")
 
+        # Compare the number of parameters
         n_parameters = utils.count_parameters(model)
         print(f"The number of parameters at this step is: {n_parameters}")
         print("The model is :\n", model)
@@ -359,6 +431,7 @@ if __name__ == "__main__":
         global_losses_over_growth.extend(train_losses)
         global_accs_over_growth.extend(train_accs)
 
+    # Create learning curves that will be saved with the results
     utils_net2net.save_training_curves(
         global_losses_over_growth, global_accs_over_growth, results_dir
     )
