@@ -1,3 +1,46 @@
+"""
+Net2Net Growth Recipe for MNIST and FashionMNIST
+=================================================
+
+Author: Sam Collin
+Framework: PyTorch
+Inspired by: SpeechBrain Recipe Structure
+
+Description:
+------------
+This script implements a pipeline for training Multi-Layer Perceptrons (MLPs)
+on MNIST or FashionMNIST using growth strategies inspired by the Net2Net framework.
+Three different strategies are supported:
+
+1. **Strategy 1 (Wider)**:
+    - Simple Net2Wider growth of the first linear layer (`lin1`) and its output layer (`lin2`).
+
+2. **Strategy 2 (Deeper + Wider)**:
+    - Step 1: Deepen `lin1` using Net2Deeper by inserting an identity layer.
+    - Step 2: Apply Net2Wider on the added middle layer and `lin2`.
+
+3. **Strategy 3 (Wider + BatchNorm)**:
+    - Similar to strategy 1, but includes propagation of BatchNorm parameters.
+
+Key Features:
+-------------
+- Growth can be applied multiple times (via `N_GROWTH`).
+- All experiments are reproducible thanks to fixed random seeds.
+- Logs and metrics are saved per growth step.
+- Function-preserving transformations are validated via pre-training evaluation.
+
+Usage:
+------
+You can run the script from the command line:
+
+```bash
+python scripts/net2net/net2net_MNIST/train.py \
+    --model young \
+    --strat 1 \
+    --dataset MNIST
+```
+"""
+
 import os
 import sys
 import torch
@@ -89,9 +132,9 @@ def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
         layer, next_layer = model.lin1, model.lin2
 
         # Make the hidden layer four times wider using net2wider at each growth
-        new_width = int(layer.out_features * 4)
+        new_width = int(layer.out_features * 2)
         new_layer, new_next_layer = net2net_ops.net2wider_linear(
-            layer, next_layer, new_width, noise_std=0.0
+            layer, next_layer, new_width, noise_std=0.01, last_block=True
         )
         # Assign the new layers
         model.lin1 = new_layer

@@ -66,6 +66,9 @@ def seed_everything(
     torch.cuda.manual_seed_all(seed)
 
     if deterministic:
+        # Ensure it works on colab
+        os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.use_deterministic_algorithms(True)

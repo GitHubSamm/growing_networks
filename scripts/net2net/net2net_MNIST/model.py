@@ -30,8 +30,8 @@ class SuperBasicMLP_strat1(nn.Module):
 
         super(SuperBasicMLP_strat1, self).__init__()
 
-        self.lin1 = nn.Linear(28 * 28, 8)
-        self.lin2 = nn.Linear(8, 10)
+        self.lin1 = nn.Linear(28 * 28, 16)
+        self.lin2 = nn.Linear(16, 10)
 
     def forward(self, x):
         """
@@ -75,8 +75,8 @@ class SuperBasicMLP_big_strat1(nn.Module):
         """
         super(SuperBasicMLP_big_strat1, self).__init__()
 
-        self.lin1 = nn.Linear(28 * 28, 128)
-        self.lin2 = nn.Linear(128, 10)
+        self.lin1 = nn.Linear(28 * 28, 64)
+        self.lin2 = nn.Linear(64, 10)
 
     def forward(self, x):
         """
