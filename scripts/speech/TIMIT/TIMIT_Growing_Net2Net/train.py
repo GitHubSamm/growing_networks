@@ -137,6 +137,9 @@ class ASR_Brain(sb.Brain):
                 print("Model has grown successfully")
                 print("New model is:\n", asr_brain.modules.model.model)
                 print("Output is:\n", asr_brain.modules.output)
+                if self.hparams.reset_optimizer:
+                    print("Reinitializing optimizer...")
+                    self.optimizer = self.hparams.opt_class(self.modules.parameters())
 
         elif stage == sb.Stage.TEST:
             self.hparams.train_logger.log_stats(

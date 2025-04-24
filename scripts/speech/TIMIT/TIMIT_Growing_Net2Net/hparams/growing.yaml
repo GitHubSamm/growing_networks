@@ -209,3 +209,4 @@ per_stats:
 growth_factor: 2
 growth_epoch: [5]
 noise_std: 0.01
+reset_optimizer: True
