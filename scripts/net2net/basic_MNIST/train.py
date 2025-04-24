@@ -152,7 +152,7 @@ def evaluate(test_loader, model, criterion, device="cpu"):
 
             # Calculate the loss
             loss = criterion(output, target)
-            test_loss += loss.item()
+            test_loss += loss.item() * data.size(0)
 
             # Count number of correct digits
             total_correct += utils_net2net.compute_n_correct(output, target)
