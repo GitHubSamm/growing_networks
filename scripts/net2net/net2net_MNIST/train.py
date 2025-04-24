@@ -392,7 +392,9 @@ if __name__ == "__main__":
     )
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+    optimizer = torch.optim.SGD(
+        model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=0.0005
+    )
 
     global_losses_over_growth = []
     global_accs_over_growth = []
@@ -409,7 +411,9 @@ if __name__ == "__main__":
         if not NO_GROWTH_BASELINE:
             model = growth_strategy(model, growth_number, STRAT_NUMBER)
             model = model.to(device)
-            optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+            optimizer = torch.optim.SGD(
+                model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=0.0005
+            )
         else:
             print("No growth here")
 

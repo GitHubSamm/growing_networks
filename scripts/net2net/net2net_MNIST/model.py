@@ -12,8 +12,8 @@ class SuperBasicMLP_strat1(nn.Module):
     for experiments involving model growth.
 
     Architecture:
-        - Linear(784 → 8) + ReLU
-        - Linear(8 → 10)
+        - Linear(784 → 16) + ReLU
+        - Linear(16 → 10)
 
     Example:
         >>> model = SuperBasicMLP_strat1()
@@ -58,8 +58,8 @@ class SuperBasicMLP_big_strat1(nn.Module):
     allowing more complex representations compared to the smaller version.
 
     Architecture:
-        - Linear(784 → 128) + ReLU
-        - Linear(128 → 10)
+        - Linear(784 → 64) + ReLU
+        - Linear(64 → 10)
 
     Example:
         >>> model = SuperBasicMLP_big_strat1()
