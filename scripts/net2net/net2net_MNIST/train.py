@@ -1,44 +1,44 @@
 """
+net2net_MNIST/train.py
+
 Net2Net Growth Recipe for MNIST and FashionMNIST
-=================================================
+================================================
 
-Author: Sam Collin
-Framework: PyTorch
-Inspired by: SpeechBrain Recipe Structure
-
-Description:
-------------
-This script implements a pipeline for training Multi-Layer Perceptrons (MLPs)
-on MNIST or FashionMNIST using growth strategies inspired by the Net2Net framework.
-Three different strategies are supported:
-
-1. **Strategy 1 (Wider)**:
-    - Simple Net2Wider growth of the first linear layer (`lin1`) and its output layer (`lin2`).
-
-2. **Strategy 2 (Deeper + Wider)**:
-    - Step 1: Deepen `lin1` using Net2Deeper by inserting an identity layer.
-    - Step 2: Apply Net2Wider on the added middle layer and `lin2`.
-
-3. **Strategy 3 (Wider + BatchNorm)**:
-    - Similar to strategy 1, but includes propagation of BatchNorm parameters.
-
-Key Features:
--------------
-- Growth can be applied multiple times (via `N_GROWTH`).
-- All experiments are reproducible thanks to fixed random seeds.
-- Logs and metrics are saved per growth step.
-- Function-preserving transformations are validated via pre-training evaluation.
-
-Usage:
+Author
 ------
-You can run the script from the command line:
+Sam Collin
 
-```bash
-python scripts/net2net/net2net_MNIST/train.py \
-    --model young \
-    --strat 1 \
-    --dataset MNIST
-```
+Framework
+---------
+PyTorch (inspired by SpeechBrain recipe structure)
+
+Description
+-----------
+This script implements a flexible training pipeline for Multi-Layer Perceptrons
+on MNIST and Fashion-MNIST, augmented with dynamic “Net2Net” growth operations.
+Supported growth strategies:
+    1. Strategy 1 (Wider)        : Net2Wider — widen the first hidden layer.
+    2. Strategy 2 (Deeper + Wider): Net2Deeper then Net2Wider on the inserted layer.
+    3. Strategy 3 (Wider + BN)    : Net2Wider with BatchNorm1d parameter propagation.
+
+Key Features
+------------
+- Apply multiple growth steps (controlled by N_GROWTH)
+- Preserve learned function at each growth via weight-transfer
+- Reproducibility ensured by fixed random seeds
+- Detailed logging and metric saving at every growth stage
+- Optional W&B integration for real-time experiment tracking
+
+Usage
+-----
+Run from project root:
+    python scripts/net2net/net2net_MNIST/train.py \
+        --model young \
+        --strat 1 \
+        --dataset MNIST \
+        [--no_growth_for_baseline] \
+        [--wandb online] \
+        [--run_name <name>]
 """
 
 import os
@@ -50,6 +50,7 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as tf
 import torch.nn as nn
 import time
+import wandb
 
 import scripts.net2net.net2net_MNIST.net2net_ops as net2net_ops
 import scripts.net2net.logger as logger
@@ -63,6 +64,8 @@ parser.add_argument("--model", type=str, default="young", choices=["young", "adu
 parser.add_argument("--strat", type=int, default=1, choices=[1, 2, 3])
 parser.add_argument("--no_growth_for_baseline", action="store_true")
 parser.add_argument("--dataset", default="MNIST", choices=["MNIST", "FASHION_MNIST"])
+parser.add_argument("--wandb", default="disabled", choices=["disabled", "online"])
+parser.add_argument("--run_name", type=str, default="xyz")
 command_line_args = parser.parse_args()
 
 # == Hparams == #
@@ -71,6 +74,28 @@ BATCH_SIZE = 64
 LEARNING_RATE = 0.01
 N_EPOCHS_BEFORE_GROW = 8
 N_GROWTH = 2
+WEIGHT_DECAY = 0.0005
+MOMENTUM = 0.9
+
+# If required, instantiate a new wandb run
+wandb.init(
+    mode=command_line_args.wandb,
+    project="growth-Net2Net",
+    name=command_line_args.run_name,
+    config=dict(
+        baseline=command_line_args.no_growth_for_baseline,
+        model=command_line_args.model,
+        strategy=STRAT_NUMBER,
+        dataset=command_line_args.dataset,
+        batch_size=BATCH_SIZE,
+        lr=LEARNING_RATE,
+        w_decay=WEIGHT_DECAY,
+        momentum=MOMENTUM,
+        n_growth=N_GROWTH,
+        n_epochs_before_grow=N_EPOCHS_BEFORE_GROW,
+    ),
+)
+
 
 # == Pre-Processing == #
 preprocess_MNIST = tf.Compose([tf.ToTensor(), tf.Normalize((0.1307,), (0.3081,))])
@@ -171,10 +196,10 @@ def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
         print("Model growing ...")
         layer, next_layer, norm_layer = model.lin1, model.lin2, model.norm
 
-        # Make the hidden layer four times wider using net2wider at each growth
-        new_width = int(layer.out_features * 4)
+        # Make the hidden layer two times wider using net2wider at each growth
+        new_width = int(layer.out_features * 2)
         new_layer, new_next_layer, new_norm_layer = net2net_ops.net2wider_linear(
-            layer, next_layer, new_width, norm_layer
+            layer, next_layer, new_width, norm_layer, noise_std=0.01, last_block=True
         )
 
         # Assign the new layers
@@ -188,7 +213,7 @@ def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
         raise ValueError(f"No strategy implemented for number {strat_number}.")
 
 
-def train(train_loader, model, epochs, criterion, optimizer, device="cpu"):
+def train(train_loader, test_loader, model, epochs, criterion, optimizer, device="cpu"):
     """
     Train a model on a given dataset.
 
@@ -251,6 +276,23 @@ def train(train_loader, model, epochs, criterion, optimizer, device="cpu"):
         epoch_loss /= n_samples
         epoch_acc = (epoch_correct / n_samples) * 100
 
+        test_loss, test_acc = evaluate(
+            test_loader,
+            model=model,
+            criterion=criterion,
+            device=device,
+            train=True,
+        )
+        model.train()
+        wandb.log(
+            {
+                "train_loss": epoch_loss,
+                "train_acc": epoch_acc,
+                "epoch": epoch,
+                "test_loss": test_loss,
+                "test_acc": test_acc,
+            }
+        )
         train_losses.append(epoch_loss)
         train_accs.append(epoch_acc)
 
@@ -393,7 +435,10 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(
-        model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=0.0005
+        model.parameters(),
+        lr=LEARNING_RATE,
+        momentum=MOMENTUM,
+        weight_decay=WEIGHT_DECAY,
     )
 
     global_losses_over_growth = []
@@ -412,8 +457,12 @@ if __name__ == "__main__":
             model = growth_strategy(model, growth_number, STRAT_NUMBER)
             model = model.to(device)
             optimizer = torch.optim.SGD(
-                model.parameters(), lr=LEARNING_RATE, momentum=0.9, weight_decay=0.0005
+                model.parameters(),
+                lr=LEARNING_RATE,
+                momentum=MOMENTUM,
+                weight_decay=WEIGHT_DECAY,
             )
+
         else:
             print("No growth here")
 
@@ -422,6 +471,7 @@ if __name__ == "__main__":
         print(f"The number of parameters at this step is: {n_parameters}")
         print("The model is :\n", model)
         print(f"\nBegin training for growth step {growth_number}...")
+        wandb.log({"n_params": n_parameters})
 
         # Evaluate model raw after growth on the train set (Check for function preserving)
         train_loss, train_acc = evaluate(
@@ -439,6 +489,7 @@ if __name__ == "__main__":
         begin = time.time()
         train_losses, train_accs, final_loss, final_acc = train(
             train_loader,
+            test_loader,
             model=model,
             epochs=N_EPOCHS_BEFORE_GROW,
             criterion=criterion,
@@ -477,6 +528,14 @@ if __name__ == "__main__":
 
         global_losses_over_growth.extend(train_losses)
         global_accs_over_growth.extend(train_accs)
+
+    wandb.log(
+        {
+            "final_test_loss": test_loss,
+            "final_test_accuracy": test_acc,
+            "train_duration": global_train_duration,
+        }
+    )
 
     # Create learning curves that will be saved with the results
     utils_net2net.save_training_curves(
