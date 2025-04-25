@@ -179,17 +179,15 @@ def growth_strategy(model, growth_number, strat_number=STRAT_NUMBER):
             layer = model.lin1
             duplicated_layer = net2net_ops.net2deeper_linear(layer)
             model.lin1 = duplicated_layer
-            return model
 
-        # For the second one, make the newly created layer 2 times wider
-        if growth_number == 2:
+            # For the second one, make the newly created layer 2 times wider
             layer = model.lin1[1]
             next_layer = model.lin2
             new_width = int(layer.out_features * 2)
             model.lin1[1], model.lin2 = net2net_ops.net2wider_linear(
-                layer, next_layer, new_width
+                layer, next_layer, new_width, noise_std=0.01, last_block=True
             )
-            return model
+        return model
 
     # Growth rules for strategy 3 (Wider + BatchNorm)
     if strat_number == 3:

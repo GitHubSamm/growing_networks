@@ -39,10 +39,10 @@ run-net2net-MNIST-without-growth_adult-strat1:
 	$(PYTHON) -m scripts.net2net.net2net_MNIST.train --model adult --strat 1 --dataset MNIST --no_growth_for_baseline
 
 # Feature Transfer
-run-net2net-MNIST-with-growth-featuretransfer:
-	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model young --strat 1 --dataset MNIST --wandb online --run_name Net2WiderNet_pretrained
-run-net2net-MNIST-adult-baseline-featuretransfer:
-	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model adult --strat 1 --no_pretrain_for_baseline --dataset MNIST --wandb online --run_name Training_from_scratch
+run-net2net-MNIST-with-growth-featuretransfer-strat1:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model young --strat 1 --dataset MNIST --wandb disabled --run_name Net2WiderNet_pretrained
+run-net2net-MNIST-adult-baseline-featuretransfer-strat1:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model adult --strat 1 --no_pretrain_for_baseline --dataset MNIST --wandb disabled --run_name Training_from_scratch
 
 # Fashion MNIST
 run-net2net-FashionMNIST-with-growth:
@@ -55,11 +55,16 @@ run-net2net-FashionMNIST-without-growth_adult:
 	$(PYTHON) -m scripts.net2net.net2net_MNIST.train --model adult --strat 1 --dataset FASHION_MNIST --no_growth_for_baseline
 
 # Feature Transfer
-run-net2net-FashionMNIST-with-growth-featuretransfer:
-	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model young --strat 1 --dataset FASHION_MNIST --wandb online --run_name Net2WiderNet_pretrained_Fashion
-run-net2net-FashionMNIST-adult-baseline-featuretransfer:
-	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model adult --strat 1 --no_pretrain_for_baseline --dataset FASHION_MNIST --wandb online --run_name Training_from_scratch_Fashion
-
+# Strategy 1 (Wider)
+run-net2net-FashionMNIST-with-growth-featuretransfer-strat1:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model young --strat 1 --dataset FASHION_MNIST --wandb disabled --run_name Net2WiderNet_pretrained_Fashion
+run-net2net-FashionMNIST-adult-baseline-featuretransfer-strat1:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model adult --strat 1 --no_pretrain_for_baseline --dataset FASHION_MNIST --wandb disabled --run_name Training_from_scratch_Fashion
+# Strategy 2 (Wider + Deeper)
+run-net2net-FashionMNIST-with-growth-featuretransfer-strat2:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model young --strat 2 --dataset FASHION_MNIST --wandb disabled --run_name Net2WiderNet_pretrained_Fashion-strat2
+run-net2net-FashionMNIST-adult-baseline-featuretransfer-strat2:
+	$(PYTHON) -m scripts.net2net.net2net_MNIST.train_knowledge_transfer --model adult --strat 2 --no_pretrain_for_baseline --dataset FASHION_MNIST --wandb disabled --run_name Training_from_scratch_Fashion-strat2
 
 
 ### Sb Recipe ASR TIMIT ###
