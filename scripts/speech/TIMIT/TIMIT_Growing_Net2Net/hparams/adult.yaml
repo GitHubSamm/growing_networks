@@ -1,8 +1,7 @@
 # ################################
 
-# This yaml is called adult referring to the growing strategy,
-# however it is the same as the speech brain recipe, nothing major
-# has been added here
+# Adult baseline TIMIT ASR
+# CRDNN LiGRU (cnn=(32,64), rnn=256, dnn=256), no growth
 
 # Model: CTC ASR on TIMIT with CRDNN (with LiGRU)
 # Additions: TimeDomainSpecAugment
@@ -16,7 +15,7 @@ output_folder: !ref results/TIMIT_Growing_real_adult_baseline/no_augment_noise_C
 test_wer_file: !ref <output_folder>/wer_test.txt
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-wandb_mode: online # Pass disabled for submission
+wandb_mode: disabled # Pass disabled for submission
 run_name: xyz
 
 # Data files

@@ -163,7 +163,7 @@ run-growing-TIMIT-young-growth-colab:
 	$(PYTHON) -m scripts.speech.TIMIT.TIMIT_Growing_Net2Net.train \
 	scripts/speech/TIMIT/TIMIT_Growing_Net2Net/hparams/growing.yaml \
 	--data_folder data/raw/TIMIT \
-	--run_name growing-TIMIT-young-w-growth-at-5-TIMIT_Growing_young_at_5_noise_0_05
+	--wandb_mode disabled
 
 clear:
 	trash results/TIMIT_Growing_young/

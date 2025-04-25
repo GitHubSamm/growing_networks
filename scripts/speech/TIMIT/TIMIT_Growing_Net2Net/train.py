@@ -4,8 +4,23 @@ The system relies on a model trained with CTC.
 Greedy search is using for validation, while beamsearch
 is used at test time to improve the system performance.
 
-To run this recipe, do the following:
-> python train.py hparams/train.yaml --data_folder /path/to/TIMIT --jit
+
+**Modifications for Growing-Net2Net experiments:**
+- Integrated Weights & Biases logging (`wandb.init`, `wandb.log`)
+- Step counter added (`self.step_count`) via `on_fit_batch_end`
+- “Growth block” in `on_stage_end` to call `model.grow(...)` at specified epochs
+- New hyperparameters in the YAML:
+    • `growth_epoch` (list of int)
+    • `growth_factor` (float)
+    • `noise_std` (float)
+    • `reset_optimizer` (bool)
+
+To run:
+On colab or NVIDIA
+> !make run-growing-TIMIT-young-growth-colab
+
+With MPS
+> !make run-growing-TIMIT-young-growth
 
 Note on Compilation:
 Enabling the just-in-time (JIT) compiler with --jit significantly improves code performance,
@@ -14,6 +29,7 @@ resulting in a 50-60% speed boost. We highly recommend utilizing the JIT compile
 Authors
  * Mirco Ravanelli 2020
  * Peter Plantinga 2020
+ * Sam Collin 2024
 """
 
 import os
@@ -121,7 +137,8 @@ class ASR_Brain(sb.Brain):
                 min_keys=["PER"],
             )
 
-            # Growth
+            # Growth block (detects if a growth is supposed to happen at this epoch)
+            # If yes, the model calls the grow() method and grows.
             if (
                 hasattr(self.hparams, "growth_epoch")
                 and epoch in self.hparams.growth_epoch

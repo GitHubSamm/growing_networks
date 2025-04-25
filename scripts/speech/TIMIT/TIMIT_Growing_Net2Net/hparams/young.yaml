@@ -1,5 +1,8 @@
 # ################################
 
+# Young baseline TIMIT ASR
+# CRDNN LiGRU (cnn=(32,64), rnn=256, dnn=128), no growth
+
 # Model: CTC ASR on TIMIT with CRDNN (with LiGRU)
 # Additions: TimeDomainSpecAugment
 # Authors: Mirco Ravanelli & Peter Plantinga 2020
@@ -12,7 +15,7 @@ output_folder: !ref results/TIMIT_Growing_young_baseline/augment_noise_CRDNN/<se
 test_wer_file: !ref <output_folder>/wer_test.txt
 save_folder: !ref <output_folder>/save
 train_log: !ref <output_folder>/train_log.txt
-wandb_mode: online # Pass disabled for submission
+wandb_mode: disabled # Pass disabled for submission
 run_name: xyz
 
 # Data files
