@@ -1,5 +1,9 @@
 # This project is part of my Conversational AI course teached by Pr. Mirco Ravanelli at Concordia University.
 
+You can explore the notebook in `_notebooks/Notebook_Growing_Networks.ipynb` for a guided walkthrough of the project, including methodology, experimental setup, and results.
+
+---
+
 The goal of this project is to explore neural networks that grow during training. While traditional training involves a fixed number of parameters in a neural network,
 this project focuses on dynamically increasing the parameters over time, similar to the adaptive nature of our brain.
 
